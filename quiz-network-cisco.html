@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>แบบทดสอบระบบเครือข่ายและ Cisco Switch — 30 ข้อ</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #121a2b;
+      --line: #243049;
+      --text: #e8eefc;
+      --muted: #9aa8c2;
+      --accent: #3b82f6;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Sarabun", "Noto Sans Thai", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1d4ed8 0%, transparent 50%),
+                  radial-gradient(900px 500px at 100% 0%, #0ea5e9 0%, transparent 40%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
+    .card {
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.28);
+    }
+    h1 { margin: 0 0 8px; font-size: 1.55rem; }
+    p { color: var(--muted); line-height: 1.6; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    label { display: block; margin: 10px 0 6px; color: #c9d6ef; }
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0e1626;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+    button.ghost { background: #1e293b; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .timer {
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      font-size: 1.2rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #172033;
+      border: 1px solid var(--line);
+    }
+    .timer.warn { color: var(--warn); }
+    .timer.danger { color: var(--bad); }
+    .q { font-size: 1.15rem; margin: 8px 0 16px; color: #f4f7ff; }
+    .opt {
+      display: block; width: 100%; text-align: left;
+      margin: 8px 0; padding: 12px 14px;
+      background: #10192a; border: 1px solid var(--line);
+      border-radius: 12px; color: var(--text);
+    }
+    .opt.selected { border-color: var(--accent); background: #13233f; }
+    .opt.correct { border-color: var(--good); background: #10291b; color: #86efac; }
+    .opt.wrong { border-color: var(--bad); background: #2a1316; color: #fca5a5; }
+    .progress { height: 8px; background: #1b2538; border-radius: 99px; overflow: hidden; margin: 10px 0 18px; }
+    .progress > i { display: block; height: 100%; background: linear-gradient(90deg, #38bdf8, #3b82f6); }
+    .score { font-size: 2.2rem; font-weight: 800; margin: 8px 0; }
+    .review { margin-top: 18px; }
+    .review .item { border-top: 1px solid var(--line); padding: 14px 0; }
+    .hidden { display: none; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: .8rem; }
+    .ok { background: #16351f; color: #86efac; }
+    .no { background: #3f1518; color: #fca5a5; }
+    .quiz-lock { user-select: none; -webkit-user-select: none; }
+    #quiz { position: relative; overflow: hidden; }
+    .wm {
+      position: absolute; inset: 0; pointer-events: none; z-index: 2;
+      background-image: repeating-linear-gradient(35deg, transparent 0 48px, rgba(255,255,255,.035) 48px 49px);
+      color: rgba(232,238,252,.16);
+      font-weight: 800; font-size: 18px; letter-spacing: .04em;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px 24px;
+      padding: 24px; transform: rotate(-18deg) scale(1.2);
+    }
+    #cover {
+      position: absolute; inset: 0; z-index: 5;
+      background: #0b1220;
+      display: none; align-items: center; justify-content: center;
+      text-align: center; padding: 24px; border-radius: 18px;
+    }
+    #cover.show { display: flex; }
+    #cover b { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section id="intro" class="card">
+      <h1>แบบทดสอบพื้นฐานระบบเครือข่ายและการตั้งค่า Cisco Switch</h1>
+      <p>จำนวน 30 ข้อ ปรนัย 4 ตัวเลือก ข้อละ 1 คะแนน เวลาทำข้อสอบ <b>30 นาทีต่อคน</b> เมื่อหมดเวลา ระบบจะส่งคำตอบอัตโนมัติ แล้วแสดงเฉพาะคะแนนรวม ไม่แสดงเฉลยรายข้อ</p>
+      <p>ระหว่างสอบ แอปจะติดลายน้ำชื่อผู้สอบ ซ่อนข้อเมื่อสลับหน้าจอ และจำกัดการคัดลอกข้อความ เพื่อลดการแคปส่งต่อ อย่างไรก็ตามการกันแคปจากเว็บแอปทำได้ไม่เด็ดขาด</p>
+      <label>ชื่อ-นามสกุล</label>
+      <input id="name" placeholder="กรอกชื่อผู้เข้าสอบ" />
+      <label>รหัส / หน่วยงาน (ถ้ามี)</label>
+      <input id="code" placeholder="เช่น รหัสนักศึกษา หรือแผนก" />
+      <div class="row" style="margin-top:16px">
+        <button id="startBtn">เริ่มทำข้อสอบ</button>
+      </div>
+      <details style="margin-top:18px">
+        <summary style="cursor:pointer;color:#93c5fd">โหมดอาจารย์ — นำเข้าข้อสอบจากไฟล์ JSON</summary>
+        <p>ใช้ไฟล์ <code>question-bank.json</code> ชุดเดียวกับหน้า teacher-import.html ได้ทั้งข้อสอบจริงและ Pre-test</p>
+        <input id="bankFile" type="file" accept=".json,application/json" />
+        <div class="row" style="margin-top:8px">
+          <button class="ghost" id="resetBankBtn" type="button">กลับไปใช้ชุดเดิมในไฟล์</button>
+        </div>
+        <p id="bankStatus"></p>
+      </details>
+    </section>
+
+    <section id="quiz" class="card hidden quiz-lock">
+      <div id="wm" class="wm" aria-hidden="true"></div>
+      <div id="cover"><div>ข้อสอบถูกซ่อนชั่วคราว<br><b>กลับมาที่หน้านี้เพื่อทำต่อ</b><br>ระบบบันทึกการสลับหน้าจอไว้ในผลสอบ</div></div>
+      <div class="topbar">
+        <div>ข้อ <span id="qnum">1</span></div>
+        <div id="timer" class="timer">30:00</div>
+      </div>
+      <div class="progress"><i id="bar"></i></div>
+      <div id="question" class="q"></div>
+      <div id="options"></div>
+      <div class="row" style="margin-top:16px">
+        <button class="ghost" id="prevBtn">ข้อก่อนหน้า</button>
+        <button id="nextBtn">ข้อถัดไป</button>
+        <button id="submitBtn">ส่งคำตอบ</button>
+      </div>
+    </section>
+
+    <section id="result" class="card hidden">
+      <div id="scoreCard">
+        <h1>ผลการสอบ</h1>
+        <p id="who"></p>
+        <div class="score" id="score"></div>
+        <p id="meta"></p>
+        <p id="stamp" style="color:#c9d6ef"></p>
+      </div>
+      <p>ระบบแสดงเฉพาะคะแนนรวม ไม่แสดงเฉลยรายข้อ เพื่อกันการส่งต่อคำตอบไปยังกลุ่มสอบรอบถัดไป</p>
+      <div class="row" style="margin-top:8px">
+        <button id="copyBtn">คัดลอกข้อความผลคะแนน</button>
+        <button class="ghost" id="printBtn">พิมพ์ / บันทึกเป็น PDF</button>
+        <button class="ghost" id="againBtn">เริ่มใหม่</button>
+      </div>
+    </section>
+  </div>
+
+<script>
+const DEFAULT_QUESTIONS = [
+  {q:"ข้อใดคือความหมายของระบบเครือข่าย (Network) ตามหลักการพื้นฐาน?", opts:["การนำคอมพิวเตอร์เครื่องเดียวมาติดตั้งโปรแกรมประมวลผลขั้นสูง","การเชื่อมต่ออุปกรณ์คอมพิวเตอร์ตั้งแต่ 2 เครื่องขึ้นไปเข้าด้วยกันเพื่อสื่อสารและแลกเปลี่ยนข้อมูล","การแปลงสัญญาณแบบไร้สายให้เป็นสัญญาณไฟฟ้าระดับ Layer 3","การรวมฮาร์ดดิสก์จากหลายเครื่องให้เป็นไดรฟ์เดียวโดยไม่ต้องใช้สายสัญญาณ"], a:1, exp:"ระบบเครือข่ายคือการเชื่อมต่อคอมพิวเตอร์ตั้งแต่ 2 เครื่องขึ้นไปเพื่อสื่อสารและแลกเปลี่ยนข้อมูล"},
+  {q:"ประโยชน์หลักของระบบเครือข่ายข้อใดที่กล่าวถึงการใช้งานเครื่องพิมพ์หรือพื้นที่จัดเก็บข้อมูลร่วมกัน?", opts:["การบริหารจัดการข้อมูลแบบสุ่ม","การจำกัดขอบเขตของ Broadcast Domain","การใช้ทรัพยากรร่วมกัน (Resource Sharing)","การแปลงหมายเลข MAC Address เป็น IP Address"], a:2, exp:"ประโยชน์หลักประการหนึ่งคือการใช้ทรัพยากรร่วมกัน เช่น เครื่องพิมพ์และพื้นที่จัดเก็บข้อมูล"},
+  {q:"ในการออกแบบระบบเครือข่ายที่ดีตามมาตรฐาน องค์กรต้องคำนึงถึงปัจจัยหลักในข้อใด?", opts:["ประสิทธิภาพ ความปลอดภัย และความสามารถในการขยายระบบในอนาคต","ความเร็วของซีพียู ความจุของแรม และขนาดหน้าจอ","จำนวนพอร์ตของ Router ค่าบริการอินเทอร์เน็ต และยี่ห้อสายสัญญาณ","การใช้ Static IP เพียงอย่างเดียวและการยกเลิก Firewall"], a:0, exp:"การออกแบบเครือข่ายที่ดีต้องคำนึงถึง Performance, Security และ Scalability"},
+  {q:"อุปกรณ์เครือข่ายใดทำหน้าที่เชื่อมต่ออุปกรณ์หลายเครื่องในเครือข่าย LAN เดียวกัน และส่งข้อมูลตาม MAC Address?", opts:["Router","Switch (Layer 2 Switch)","Firewall","Wireless Access Point"], a:1, exp:"Layer 2 Switch ส่งข้อมูลโดยอ้างอิง MAC Address ใน LAN เดียวกัน"},
+  {q:"อุปกรณ์เครือข่ายใดทำหน้าที่ตรวจสอบและควบคุม Traffic ที่ผ่านเข้า-ออกตามนโยบาย (Policy) เพื่อป้องกันการเข้าถึงที่ไม่ได้รับอนุญาต?", opts:["Server","Switch","Firewall","Access Point"], a:2, exp:"Firewall ควบคุมทราฟฟิกตามนโยบายความปลอดภัย"},
+  {q:"อุปกรณ์ใดทำหน้าที่แปลงสัญญาณจากเครือข่ายแบบมีสาย (Wired) ให้กลายเป็นสัญญาณไร้สาย (Wi-Fi)?", opts:["Wireless Access Point (WAP)","Layer 2 Switch","DHCP Server","File Server"], a:0, exp:"WAP แปลงสัญญาณมีสายเป็น Wi-Fi"},
+  {q:"หมายเลข IPv4 Address มีความยาวโครงสร้างทั้งหมดกี่บิต?", opts:["16 บิต","32 บิต","64 บิต","128 บิต"], a:1, exp:"IPv4 มีความยาว 32 บิต"},
+  {q:"หากมีการตั้งค่าหมายเลข IP Address ซ้ำกันภายในเครือข่ายหรือ Subnet เดียวกัน จะส่งผลให้เกิดปัญหาใด?", opts:["Broadcast Storm","IP Conflict ทำให้การสื่อสารผิดพลาด","VLAN Loop","Access Port Shutdown"], a:1, exp:"IP ซ้ำในซับเน็ตเดียวกันทำให้เกิด IP Conflict"},
+  {q:"เหตุใดอุปกรณ์เครือข่ายหลัก เช่น Switch, Router หรือ Server จึงนิยมกำหนดหมายเลข IP แบบ Static IP?", opts:["เพื่อให้หมายเลขเปลี่ยนไปเรื่อยๆ เพิ่มความปลอดภัย","เพื่อความแน่นอนในการระบุตำแหน่งและการเข้าถึงบริการ","เพื่อลดการทำงานของสาย Console","เพราะอุปกรณ์หลักไม่สามารถรับค่าจาก DHCP ได้"], a:1, exp:"อุปกรณ์หลักใช้ Static IP เพื่อระบุตำแหน่งและเข้าถึงบริการได้แน่นอน"},
+  {q:"Subnet Mask แบบ 255.255.255.0 หรือ Prefix Length /24 สามารถรองรับจำนวน Host ที่ใช้งานจริงได้ประมาณกี่เครื่อง?", opts:["2 เครื่อง","62 เครื่อง","126 เครื่อง","254 เครื่อง"], a:3, exp:"/24 มี usable host ประมาณ 254 เครื่อง"},
+  {q:"Prefix Length แบบใดที่นิยมนำมาใช้งานกับ Link เชื่อมต่อระหว่างอุปกรณ์ (เช่น WAN Link) เนื่องจากรองรับเพียง 2 Hosts?", opts:["/24","/26","/28","/30"], a:3, exp:"/30 รองรับ 2 host จึงนิยมใช้กับลิงก์ระหว่างอุปกรณ์"},
+  {q:"ข้อใดคือหน้าที่หลักของ Default Gateway ในระบบเครือข่าย?", opts:["เป็นทางออกให้กับ Traffic ที่ต้องการไปยังเครือข่ายอื่นที่ไม่ได้อยู่ใน Subnet เดียวกัน","แจกหมายเลข IP Address ให้แก่เครื่อง Client อัตโนมัติ","แปลงชื่อเว็บไซต์ให้กลายเป็นหมายเลข IP Address","สลับโหมดการทำงานของ Switch ไปยัง Privileged EXEC Mode"], a:0, exp:"Default Gateway เป็นทางออกไปยังเครือข่ายอื่น"},
+  {q:"หากเครื่องคอมพิวเตอร์สามารถสื่อสารกับเครื่องอื่นในวง LAN เดียวกันได้ แต่ไม่สามารถออกอินเทอร์เน็ตได้ สาเหตุที่พบได้บ่อยที่สุดคืออะไร?", opts:["พอร์ตของ Switch ถูกตั้งค่าเป็น Trunk Port","กำหนดค่า Default Gateway ผิดพลาด","สาย Console หลุดจากเครื่อง","ไม่ได้ใส่รหัสผ่าน enable secret"], a:1, exp:"คุยใน LAN ได้แต่ออกเน็ตไม่ได้ มักมาจาก Default Gateway ผิด"},
+  {q:"ข้อใดคือประโยชน์หลักของบริการ DHCP (Dynamic Host Configuration Protocol)?", opts:["ป้องกันการดักจับข้อมูลบนเครือข่ายไร้สาย","แจก IP Address, Subnet Mask, Default Gateway และ DNS ให้แก่อุปกรณ์อัตโนมัติ","แปลงหมายเลข MAC Address ให้เป็น IP Address","รวม Switch หลายตัวให้ทำงานเป็นสวิตช์เสมือนตัวเดียว"], a:1, exp:"DHCP แจก IP, mask, gateway และ DNS อัตโนมัติ"},
+  {q:"ลำดับขั้นตอนการทำงานของ DHCP ตามรูปแบบ DORA Process ที่ถูกต้องคือข้อใด?", opts:["Discover -> Offer -> Request -> Acknowledge","Domain -> Option -> Route -> Access","Data -> Offer -> Receive -> Accept","Discover -> Option -> Request -> Access"], a:0, exp:"DORA = Discover, Offer, Request, Acknowledge"},
+  {q:"บริการ DNS (Domain Name System) มีหน้าที่สำคัญอย่างไรในระบบเครือข่าย?", opts:["แจกหมายเลข IP Address ให้เครื่องคอมพิวเตอร์ใหม่","แปลงชื่อโดเมนที่มนุษย์จำง่ายให้เป็นหมายเลข IP Address ที่คอมพิวเตอร์ใช้สื่อสาร","เชื่อมต่อพอร์ต Access เข้ากับพอร์ต Trunk","จัดการจราจรข้อมูลไม่ให้เกิด Loop บน Switch"], a:1, exp:"DNS แปลงชื่อโดเมนเป็น IP Address"},
+  {q:"ในขั้นตอน DORA ของ DHCP เมื่อเครื่อง Client ได้รับข้อเสนอ IP แล้วทำการตอบรับเพื่อขอใช้ IP นั้น ตรงกับขั้นตอนใด?", opts:["Discover","Offer","Request","Acknowledge"], a:2, exp:"ขั้นตอน Request คือการตอบรับข้อเสนอ IP"},
+  {q:"ข้อใดอธิบายวัตถุประสงค์ของการทำ VLAN (Virtual LAN) ได้ถูกต้องที่สุด?", opts:["การเพิ่มความเร็วของสาย LAN ให้เป็น Gigabit ทุกพอร์ต","การแบ่ง Broadcast Domain ทางตรรกะภายในสวิตช์ เพื่อความปลอดภัยและเพิ่มประสิทธิภาพ","การแปลงสัญญาณแบบ Serial ให้เป็น USB เพื่อต่อสาย Console","การแจก IP Address แบบกำหนดเวลา 30 นาที"], a:1, exp:"VLAN แบ่ง Broadcast Domain ทางตรรกะ"},
+  {q:"หากเครื่องคอมพิวเตอร์ 2 เครื่องต่ออยู่บน Switch ตัวเดียวกัน แต่อยู่คนละ VLAN จะสามารถสื่อสารกันได้ด้วยเงื่อนไขใด?", opts:["สามารถสื่อสารกันได้ทันทีที่ Layer 2","ต้องสื่อสารผ่านการ Routing (Inter-VLAN Routing) ที่ Layer 3","ต้องเปลี่ยนสาย LAN ให้เป็นแบบสายไขว้ (Crossover)","ไม่สามารถสื่อสารกันได้ในทุกกรณี"], a:1, exp:"คนละ VLAN ต้องผ่าน Inter-VLAN Routing ที่ Layer 3"},
+  {q:"ข้อใดเป็นข้อดีของ VLAN ในด้านการเพิ่มประสิทธิภาพของระบบเครือข่าย?", opts:["จำกัดการแพร่กระจายของ Broadcast Traffic ไม่ให้กระทบประสิทธิภาพโดยรวม","ยกเลิกการใช้งาน Router และ Firewall ในระบบ","เพิ่มจำนวน IP Address ให้ใช้งานได้ไม่จำกัด","ทำให้สามารถเชื่อมต่อ Wi-Fi โดยไม่ต้องมีรหัสผ่าน"], a:0, exp:"VLAN จำกัดขอบเขต Broadcast Traffic"},
+  {q:"พอร์ตประเภท Access Port บน Switch มีลักษณะการทำงานอย่างไร?", opts:["ส่งผ่านข้อมูลได้หลาย VLAN พร้อมกัน","ต่อเข้ากับเครื่อง Client และยอมให้ Traffic ของ VLAN เพียง VLAN เดียววิ่งผ่าน","ทำหน้าที่เป็น Uplink เชื่อมต่อระหว่าง Switch กับ Switch เท่านั้น","ยอมให้ MAC Address จากหลายสิบเครื่องวิ่งผ่านพร้อมกัน"], a:1, exp:"Access Port รับ VLAN เดียวและต่อกับ Client"},
+  {q:"พอร์ตประเภท Trunk Port (หรือ Uplink Port) มีหน้าที่สำคัญอย่างไร?", opts:["เชื่อมต่อกับเครื่องคอมพิวเตอร์ Client เพียงเครื่องเดียว","ทำหน้าที่ส่งผ่าน Traffic ของหลายๆ VLAN ให้กระจายไปยัง Switch ตัวอื่น","ปิดการรับส่งข้อมูลทั้งหมดเพื่อป้องกันไวรัส","แปลงสัญญาณดิจิทัลให้เป็นสัญญาณอนาล็อก"], a:1, exp:"Trunk ส่งหลาย VLAN ระหว่างสวิตช์"},
+  {q:"ข้อใดคือความยืดหยุ่นของ VLAN เมื่อผู้ใช้งานต้องการย้ายแผนกหรือย้ายโต๊ะทำงาน?", opts:["ต้องเดินสายเคเบิลใหม่ทั้งหมดจากห้อง Server","เปลี่ยนเพียงการตั้งค่าบน Switch และ IP Address โดยไม่ต้องย้ายสายหรือสวิตช์","ต้องซื้อ Switch ตัวใหม่มาติดตั้งเพิ่มตามแผนก","ต้องรีเซ็ตค่า Switch กลับเป็นค่าจากโรงงาน"], a:1, exp:"ย้ายแผนกได้โดยเปลี่ยนคอนฟิก VLAN/IP ไม่ต้องย้ายสาย"},
+  {q:"ในการเชื่อมต่อสาย Console เข้ากับ Cisco Switch ผ่านโปรแกรม Terminal (เช่น PuTTY หรือ SecureCRT) ต้องตั้งค่า Baud Rate ไว้ที่เท่าใด?", opts:["4800","9600","19200","115200"], a:1, exp:"Baud Rate มาตรฐานของ Cisco console คือ 9600"},
+  {q:"หากต้องการเปลี่ยนจาก User EXEC Mode (Switch>) ไปยัง Privileged EXEC Mode (Switch#) ต้องใช้คำสั่งใด?", opts:["configure terminal","enable (หรือ en)","hostname","show vlan"], a:1, exp:"ใช้คำสั่ง enable เพื่อเข้า Privileged EXEC"},
+  {q:"คำสั่งใดใช้สำหรับเข้าสู่ Global Configuration Mode (Switch(config)#) เพื่อเริ่มตั้งค่าระบบ?", opts:["configure terminal (หรือ conf t)","interface fastethernet 0/1","switchport mode access","exit"], a:0, exp:"configure terminal หรือ conf t เข้าโหมดคอนฟิกกลาง"},
+  {q:"สวิตช์ Cisco สามารถสร้างหมายเลข VLAN ได้สูงสุดกี่ VLANs?", opts:["254 VLANs","1,024 VLANs","4,096 VLANs","65,536 VLANs"], a:2, exp:"Cisco รองรับ VLAN ID สูงสุด 4096"},
+  {q:"หากต้องการตั้งค่าโหมด Access ให้กับกลุ่มพอร์ต Fa0/2 ถึง Fa0/6 พร้อมกัน ต้องใช้คำสั่งกำหนดอินเทอร์เฟซในข้อใด?", opts:["interface fastethernet 0/2-6","interface range fastethernet 0/2-6","interface group fastethernet 0/2 to 0/6","interface vlan 2-6"], a:1, exp:"ใช้ interface range เพื่อตั้งค่าหลายพอร์ตพร้อมกัน"},
+  {q:"คำสั่งใดใช้สำหรับบันทึกการตั้งค่าลง NVRAM ขณะที่ยังทำงานอยู่ใน Global Configuration Mode โดยไม่ต้องสลับโหมด?", opts:["wr","do wr","save config","copy run start"], a:1, exp:"ในโหมด config ให้ใช้ do wr เพื่อบันทึกทันที"},
+  {q:"คำสั่งใดใช้สำหรับตรวจสอบตาราง VLAN ทั้งหมดและดูว่าพอร์ตใดบ้างที่เป็นสมาชิกของแต่ละ VLAN?", opts:["show running-config (หรือ sh run)","show vlan (หรือ sh vlan)","show interfaces status (หรือ sh int status)","show ip interface brief"], a:1, exp:"show vlan แสดงตาราง VLAN และสมาชิกพอร์ต"}
+];
+
+const BANK_KEY = "ciscoQuestionBankV1";
+let QUESTIONS = DEFAULT_QUESTIONS.slice();
+let DURATION = 30 * 60;
+let quizTitle = "แบบทดสอบพื้นฐานระบบเครือข่ายและการตั้งค่า Cisco Switch";
+let idx = 0, answers = [], left = DURATION, timerId = null, startedAt = 0;
+let examOn = false, leaveCount = 0, whoMark = "";
+
+const $ = id => document.getElementById(id);
+function letters(i){ return ["A","B","C","D"][i]; }
+function parseAnswer(item, i){
+  if (Number.isInteger(item.a) && item.a >= 0 && item.a <= 3) return item.a;
+  const letter = String(item.answer || item.key || "").trim().toUpperCase();
+  const map = {A:0,B:1,C:2,D:3};
+  if (letter in map) return map[letter];
+  throw new Error("ข้อ " + (i+1) + " ไม่มีเฉลยที่ถูกต้อง");
+}
+function normalizeBank(data){
+  if (Array.isArray(data)) data = {title:quizTitle, durationMinutes:30, questions:data};
+  if (!data || !Array.isArray(data.questions) || !data.questions.length) throw new Error("ไม่พบ questions");
+  return {
+    title: data.title || quizTitle,
+    durationMinutes: Number(data.durationMinutes) > 0 ? Number(data.durationMinutes) : 30,
+    questions: data.questions.map((item,i) => {
+      if (!item.q || !Array.isArray(item.opts) || item.opts.length !== 4) throw new Error("ข้อ " + (i+1) + " ต้องมีคำถามและตัวเลือก 4 ข้อ");
+      return {q:String(item.q), opts:item.opts.map(String), a:parseAnswer(item,i), exp:String(item.exp || "")};
+    })
+  };
+}
+function applyBank(bank, save){
+  QUESTIONS = bank.questions;
+  DURATION = bank.durationMinutes * 60;
+  quizTitle = bank.title;
+  answers = Array(QUESTIONS.length).fill(null);
+  if (save) localStorage.setItem(BANK_KEY, JSON.stringify(bank));
+  if ($("bankStatus")) $("bankStatus").textContent = "ชุดปัจจุบัน: " + bank.title + " • " + QUESTIONS.length + " ข้อ • " + bank.durationMinutes + " นาที";
+}
+function loadSavedBank(){
+  try {
+    const raw = localStorage.getItem(BANK_KEY);
+    if (!raw) { applyBank({title:quizTitle, durationMinutes:30, questions:DEFAULT_QUESTIONS}, false); return; }
+    applyBank(normalizeBank(JSON.parse(raw)), false);
+  } catch (e) {
+    applyBank({title:quizTitle, durationMinutes:30, questions:DEFAULT_QUESTIONS}, false);
+  }
+}
+function renderQ(){
+  const item = QUESTIONS[idx];
+  $("qnum").textContent = (idx + 1) + " / " + QUESTIONS.length;
+  $("question").textContent = item.q;
+  $("bar").style.width = ((idx+1)/QUESTIONS.length*100) + "%";
+  $("options").innerHTML = item.opts.map((t,i) =>
+    `<button class="opt ${answers[idx]===i?"selected":""}" data-i="${i}">${letters(i)}. ${t}</button>`
+  ).join("");
+  [...$("options").children].forEach(btn => btn.onclick = () => {
+    answers[idx] = Number(btn.dataset.i);
+    renderQ();
+  });
+  $("prevBtn").disabled = idx === 0;
+  $("nextBtn").textContent = idx === QUESTIONS.length - 1 ? "ตรวจก่อนส่ง" : "ข้อถัดไป";
+}
+
+function tick(){
+  left--;
+  const m = String(Math.floor(left/60)).padStart(2,"0");
+  const s = String(left%60).padStart(2,"0");
+  const el = $("timer");
+  el.textContent = `${m}:${s}`;
+  el.className = "timer" + (left<=60?" danger": left<=180?" warn":"");
+  if (left <= 0) finish();
+}
+
+function paintWatermark(){
+  const tiles = Array.from({length: 16}, () => whoMark).join("");
+  $("wm").innerHTML = Array.from({length: 16}, () => `<span>${whoMark}</span>`).join("");
+}
+
+function hidePaper(hide){
+  $("cover").classList.toggle("show", hide);
+}
+
+function start(){
+  const name = $("name").value.trim();
+  if (!name) { alert("กรุณากรอกชื่อก่อนเริ่มสอบ"); return; }
+  whoMark = `${name}${$("code").value? " / "+$("code").value:""}`;
+  $("intro").classList.add("hidden");
+  $("quiz").classList.remove("hidden");
+  examOn = true;
+  leaveCount = 0;
+  idx = 0;
+  answers = Array(QUESTIONS.length).fill(null);
+  startedAt = Date.now();
+  left = DURATION;
+  paintWatermark();
+  renderQ();
+  timerId = setInterval(tick, 1000);
+}
+
+function finish(){
+  if (timerId) clearInterval(timerId);
+  examOn = false;
+  hidePaper(false);
+  const used = Math.min(DURATION, Math.round((Date.now()-startedAt)/1000));
+  let score = 0;
+  QUESTIONS.forEach((q,i) => { if (answers[i] === q.a) score++; });
+  $("quiz").classList.add("hidden");
+  $("result").classList.remove("hidden");
+  const who = `${$("name").value}${$("code").value? " • "+$("code").value:""}`;
+  const when = new Date().toLocaleString("th-TH");
+  $("who").textContent = who;
+  $("score").textContent = `${score} / ${QUESTIONS.length}`;
+  $("meta").textContent = `ใช้เวลา ${Math.floor(used/60)} นาที ${used%60} วินาที • ตอบแล้ว ${answers.filter(x=>x!==null).length}/${QUESTIONS.length} ข้อ • สลับหน้าจอ ${leaveCount} ครั้ง`;
+  $("stamp").textContent = `เวลาส่งผล: ${when}`;
+  window._scoreText = `${quizTitle}\nชื่อ: ${who}\nคะแนน: ${score}/${QUESTIONS.length}\nใช้เวลา: ${Math.floor(used/60)} นาที ${used%60} วินาที\nสลับหน้าจอ: ${leaveCount} ครั้ง\nเวลาส่งผล: ${when}`;
+}
+
+if ($("bankFile")) $("bankFile").onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try { applyBank(normalizeBank(JSON.parse(r.result)), true); }
+    catch (err) { alert("นำเข้าไม่สำเร็จ: " + err.message); }
+  };
+  r.readAsText(f, "utf-8");
+};
+if ($("resetBankBtn")) $("resetBankBtn").onclick = () => {
+  localStorage.removeItem(BANK_KEY);
+  applyBank({title:"แบบทดสอบพื้นฐานระบบเครือข่ายและการตั้งค่า Cisco Switch", durationMinutes:30, questions:DEFAULT_QUESTIONS}, false);
+};
+loadSavedBank();
+
+$("startBtn").onclick = start;
+$("prevBtn").onclick = () => { if (idx>0){ idx--; renderQ(); } };
+$("nextBtn").onclick = () => { if (idx<QUESTIONS.length-1){ idx++; renderQ(); } };
+$("submitBtn").onclick = () => {
+  const blank = answers.filter(x=>x===null).length;
+  if (blank && !confirm(`ยังไม่ได้ตอบ ${blank} ข้อ ต้องการส่งเลยหรือไม่?`)) return;
+  finish();
+};
+$("againBtn").onclick = () => location.reload();
+$("copyBtn").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(window._scoreText || "");
+    alert("คัดลอกข้อความผลคะแนนแล้ว");
+  } catch (e) {
+    prompt("คัดลอกข้อความนี้", window._scoreText || "");
+  }
+};
+$("printBtn").onclick = () => window.print();
+
+document.addEventListener("visibilitychange", () => {
+  if (!examOn) return;
+  if (document.hidden) { leaveCount++; hidePaper(true); }
+  else hidePaper(false);
+});
+window.addEventListener("blur", () => { if (examOn) { leaveCount++; hidePaper(true); } });
+window.addEventListener("focus", () => { if (examOn) hidePaper(false); });
+document.addEventListener("contextmenu", e => { if (examOn) e.preventDefault(); });
+document.addEventListener("copy", e => { if (examOn) e.preventDefault(); });
+document.addEventListener("keydown", e => {
+  if (!examOn) return;
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && ["c","s","p","u"].includes(k)) e.preventDefault();
+  if (k === "printscreen") { hidePaper(true); setTimeout(() => hidePaper(false), 1500); }
+});
+</script>
+</body>
+</html>
