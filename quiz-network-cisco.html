@@ -120,6 +120,7 @@
       <h1>แบบทดสอบพื้นฐานระบบเครือข่ายและการตั้งค่า Cisco Switch</h1>
       <p>จำนวน 30 ข้อ ปรนัย 4 ตัวเลือก ข้อละ 1 คะแนน เวลาทำข้อสอบ <b>30 นาทีต่อคน</b> เมื่อหมดเวลา ระบบจะส่งคำตอบอัตโนมัติ แล้วแสดงเฉพาะคะแนนรวม ไม่แสดงเฉลยรายข้อ</p>
       <p>ระหว่างสอบ แอปจะติดลายน้ำชื่อผู้สอบ ซ่อนข้อเมื่อสลับหน้าจอ และจำกัดการคัดลอกข้อความ เพื่อลดการแคปส่งต่อ อย่างไรก็ตามการกันแคปจากเว็บแอปทำได้ไม่เด็ดขาด</p>
+      <p>เมื่อส่งคำตอบ ระบบจะบันทึกชื่อและคะแนนของคุณไว้ในฐานข้อมูลของผู้ดูแลข้อสอบ เพื่อใช้ติดตามผล</p>
       <label>ชื่อ-นามสกุล</label>
       <input id="name" placeholder="กรอกชื่อผู้เข้าสอบ" />
       <label>รหัส / หน่วยงาน (ถ้ามี)</label>
@@ -162,6 +163,7 @@
         <div class="score" id="score"></div>
         <p id="meta"></p>
         <p id="stamp" style="color:#c9d6ef"></p>
+        <p id="submitStatus" style="color:#93c5fd"></p>
       </div>
       <p>ระบบแสดงเฉพาะคะแนนรวม ไม่แสดงเฉลยรายข้อ เพื่อกันการส่งต่อคำตอบไปยังกลุ่มสอบรอบถัดไป</p>
       <div class="row" style="margin-top:8px">
@@ -205,6 +207,9 @@ const DEFAULT_QUESTIONS = [
   {q:"คำสั่งใดใช้สำหรับบันทึกการตั้งค่าลง NVRAM ขณะที่ยังทำงานอยู่ใน Global Configuration Mode โดยไม่ต้องสลับโหมด?", opts:["wr","do wr","save config","copy run start"], a:1, exp:"ในโหมด config ให้ใช้ do wr เพื่อบันทึกทันที"},
   {q:"คำสั่งใดใช้สำหรับตรวจสอบตาราง VLAN ทั้งหมดและดูว่าพอร์ตใดบ้างที่เป็นสมาชิกของแต่ละ VLAN?", opts:["show running-config (หรือ sh run)","show vlan (หรือ sh vlan)","show interfaces status (หรือ sh int status)","show ip interface brief"], a:1, exp:"show vlan แสดงตาราง VLAN และสมาชิกพอร์ต"}
 ];
+
+// วาง URL ของ Google Apps Script Web App ที่ Deploy แล้วตรงนี้ (ดูวิธีตั้งค่าใน apps-script/Code.gs)
+const GAS_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 const BANK_KEY = "ciscoQuestionBankV1";
 let QUESTIONS = DEFAULT_QUESTIONS.slice();
@@ -319,6 +324,34 @@ function finish(){
   $("meta").textContent = `ใช้เวลา ${Math.floor(used/60)} นาที ${used%60} วินาที • ตอบแล้ว ${answers.filter(x=>x!==null).length}/${QUESTIONS.length} ข้อ • สลับหน้าจอ ${leaveCount} ครั้ง`;
   $("stamp").textContent = `เวลาส่งผล: ${when}`;
   window._scoreText = `${quizTitle}\nชื่อ: ${who}\nคะแนน: ${score}/${QUESTIONS.length}\nใช้เวลา: ${Math.floor(used/60)} นาที ${used%60} วินาที\nสลับหน้าจอ: ${leaveCount} ครั้ง\nเวลาส่งผล: ${when}`;
+  submitResult({
+    name: $("name").value.trim(),
+    code: $("code").value.trim(),
+    score, total: QUESTIONS.length,
+    usedSeconds: used,
+    leaveCount,
+    title: quizTitle,
+    when
+  });
+}
+
+function submitResult(payload){
+  const statusEl = $("submitStatus");
+  if (!GAS_URL || GAS_URL.indexOf("PASTE_YOUR_") === 0) {
+    if (statusEl) statusEl.textContent = "ยังไม่ได้ตั้งค่าปลายทางบันทึกคะแนน (GAS_URL) — กรุณาคัดลอกผลคะแนนส่งอาจารย์แทน";
+    return;
+  }
+  if (statusEl) statusEl.textContent = "กำลังบันทึกผลคะแนน...";
+  fetch(GAS_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  }).then(() => {
+    if (statusEl) statusEl.textContent = "บันทึกผลคะแนนเรียบร้อย";
+  }).catch(() => {
+    if (statusEl) statusEl.textContent = "บันทึกผลคะแนนไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาคัดลอกผลคะแนนส่งอาจารย์แทน";
+  });
 }
 
 if ($("bankFile")) $("bankFile").onchange = e => {
